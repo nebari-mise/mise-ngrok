@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Bump version + hash from Homebrew cask:
+# https://github.com/Homebrew/homebrew-cask/blob/main/Casks/n/ngrok.rb
+echo "3.37.3"

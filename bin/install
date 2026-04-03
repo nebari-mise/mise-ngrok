@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+version="$ASDF_INSTALL_VERSION"
+install_path="$ASDF_INSTALL_PATH"
+
+# Map version -> per-platform download hash.
+# These are opaque tokens from ngrok's CDN — grab new ones from Homebrew's cask:
+# https://github.com/Homebrew/homebrew-cask/blob/main/Casks/n/ngrok.rb
+declare -A hashes
+hashes["3.37.3,darwin-arm64"]="5mfSNpNhBZC"
+hashes["3.37.3,darwin-amd64"]="gcLZ7yYLAxt"
+
+os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+arch="$(uname -m)"
+case "$arch" in
+  aarch64|arm64) arch="arm64" ;;
+  x86_64)        arch="amd64" ;;
+  *)             echo "Unsupported arch: $arch" >&2; exit 1 ;;
+esac
+
+key="${version},${os}-${arch}"
+hash="${hashes[$key]:-}"
+if [[ -z "$hash" ]]; then
+  echo "No ngrok download hash for ${key}" >&2
+  echo "Update bin/install with the hash from the Homebrew cask." >&2
+  exit 1
+fi
+
+url="https://bin.ngrok.com/a/${hash}/ngrok-v3-${version}-${os}-${arch}.zip"
+
+mkdir -p "${install_path}/bin"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+echo "Downloading ngrok ${version} (${os}-${arch})..."
+curl -fsSL "$url" -o "${tmp}/ngrok.zip"
+unzip -q "${tmp}/ngrok.zip" -d "${install_path}/bin"
+chmod +x "${install_path}/bin/ngrok"
