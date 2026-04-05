@@ -12,18 +12,21 @@ case "$arch" in
   *)             echo "Unsupported arch: $arch" >&2; exit 1 ;;
 esac
 
-# Opaque per-version download tokens from ngrok's CDN.
-# Grab new ones from Homebrew's cask:
-# https://github.com/Homebrew/homebrew-cask/blob/main/Casks/n/ngrok.rb
-case "${version},${os}-${arch}" in
-  3.37.3,darwin-arm64) hash="5mfSNpNhBZC" ;;
-  3.37.3,darwin-amd64) hash="gcLZ7yYLAxt" ;;
-  *) echo "No ngrok download hash for ${version} ${os}-${arch}" >&2
-     echo "Update bin/install with the hash from the Homebrew cask." >&2
-     exit 1 ;;
-esac
-
-url="https://bin.ngrok.com/a/${hash}/ngrok-v3-${version}-${os}-${arch}.zip"
+# macOS uses opaque CDN tokens from Homebrew cask.
+# Linux uses the public equinox.io download URL (no token needed).
+if [[ "$os" == "darwin" ]]; then
+  case "${version},${arch}" in
+    3.37.3,arm64) hash="5mfSNpNhBZC" ;;
+    3.37.3,amd64) hash="gcLZ7yYLAxt" ;;
+    *) echo "No ngrok download hash for ${version} darwin-${arch}" >&2
+       echo "Update bin/install with the hash from the Homebrew cask:" >&2
+       echo "https://github.com/Homebrew/homebrew-cask/blob/main/Casks/n/ngrok.rb" >&2
+       exit 1 ;;
+  esac
+  url="https://bin.ngrok.com/a/${hash}/ngrok-v3-${version}-${os}-${arch}.zip"
+else
+  url="https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-${version}-${os}-${arch}.zip"
+fi
 
 mkdir -p "${install_path}/bin"
 tmp="$(mktemp -d)"
